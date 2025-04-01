@@ -7,30 +7,88 @@ import TodoList from "./components/TodoList";
 import {
   TodoItem,
   loadTodos,
-  saveTodos,
   addTodo,
   toggleTodoComplete,
   deleteTodo,
 } from "./actions";
 
+// Simple Toast component
+const Toast = ({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: "success" | "error";
+  onClose: () => void;
+}) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg ${
+        type === "success" ? "bg-green-500" : "bg-red-500"
+      } text-white flex items-center gap-2 transition-opacity duration-300`}
+    >
+      <span>{message}</span>
+      <button
+        onClick={onClose}
+        className="ml-2 text-white hover:text-gray-200"
+        aria-label="Close notification"
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
 export default function TodoApp() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  // Load todos from localStorage on initial render
+  // Load todos from database on initial render
   useEffect(() => {
-    setTodos(loadTodos());
+    const fetchTodos = async () => {
+      setIsLoading(true);
+      try {
+        const loadedTodos = await loadTodos();
+        setTodos(loadedTodos);
+      } catch (error) {
+        console.error("Failed to load todos", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTodos();
   }, []);
 
-  // Save todos to localStorage whenever they change
-  useEffect(() => {
-    saveTodos(todos);
-  }, [todos]);
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+  };
 
-  const handleAddTodo = () => {
+  const handleAddTodo = async () => {
     if (inputValue.trim() === "") return;
-    setTodos(addTodo(todos, inputValue));
-    setInputValue("");
+
+    try {
+      const updatedTodos = await addTodo(todos, inputValue);
+      setTodos(updatedTodos);
+      setInputValue("");
+      showToast("Todo added successfully!", "success");
+    } catch (error) {
+      console.error("Failed to add todo", error);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -39,12 +97,31 @@ export default function TodoApp() {
     }
   };
 
-  const handleToggleComplete = (id: number) => {
-    setTodos(toggleTodoComplete(todos, id));
+  const handleToggleComplete = async (id: number) => {
+    try {
+      const todoToUpdate = todos.find((todo) => todo.id === id);
+      if (!todoToUpdate) return;
+
+      const updatedTodos = await toggleTodoComplete(todos, id);
+      setTodos(updatedTodos);
+
+      // Show congratulatory message only when completing a task (not when un-completing)
+      if (!todoToUpdate.completed) {
+        showToast("Great job! Task completed! 🎉", "success");
+      }
+    } catch (error) {
+      console.error("Failed to toggle todo", error);
+    }
   };
 
-  const handleDeleteTodo = (id: number) => {
-    setTodos(deleteTodo(todos, id));
+  const handleDeleteTodo = async (id: number) => {
+    try {
+      const updatedTodos = await deleteTodo(todos, id);
+      setTodos(updatedTodos);
+      showToast("Todo deleted successfully!", "success");
+    } catch (error) {
+      console.error("Failed to delete todo", error);
+    }
   };
 
   return (
@@ -87,11 +164,17 @@ export default function TodoApp() {
 
         {/* Todo List */}
         <div className="w-full">
-          <TodoList
-            todos={todos}
-            onToggle={handleToggleComplete}
-            onDelete={handleDeleteTodo}
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF2056]"></div>
+            </div>
+          ) : (
+            <TodoList
+              todos={todos}
+              onToggle={handleToggleComplete}
+              onDelete={handleDeleteTodo}
+            />
+          )}
         </div>
       </main>
 
@@ -103,6 +186,14 @@ export default function TodoApp() {
           ← Back to Home
         </Link>
       </footer>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

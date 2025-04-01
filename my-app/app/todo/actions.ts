@@ -1,83 +1,81 @@
-export type TodoItem = {
-    id: number;
-    text: string;
-    completed: boolean;
-};
+'use server';
 
-// Load todos from localStorage
-export const loadTodos = (): TodoItem[] => {
-    if (typeof window === 'undefined') return [];
+import { prisma } from '@/lib/prisma';
+import { Todo } from '@prisma/client';
 
-    const storedTodos = localStorage.getItem("todos");
-    if (storedTodos) {
-        try {
-            return JSON.parse(storedTodos);
-        } catch (error) {
-            console.error("Failed to parse stored todos", error);
-            return getDefaultTodos();
-        }
+export type TodoItem = Todo;
+
+// Load todos from the database
+export const loadTodos = async (): Promise<TodoItem[]> => {
+    try {
+        const todos = await prisma.todo.findMany({
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        return todos;
+    } catch (error) {
+        console.error('Failed to load todos from database', error);
+        return [];
     }
-    return getDefaultTodos();
 };
 
-// Save todos to localStorage
-export const saveTodos = (todos: TodoItem[]): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem("todos", JSON.stringify(todos));
-};
-
-// Get default todos
-export const getDefaultTodos = (): TodoItem[] => {
-    return [
-        {
-            id: 1,
-            text: "Breathe in, out. 🌬️",
-            completed: true,
-        },
-        {
-            id: 2,
-            text: "I'm alive! 🙌",
-            completed: true,
-        },
-        {
-            id: 3,
-            text: "Make sun smile. 😊",
-            completed: false,
-        },
-        {
-            id: 4,
-            text: "Teach fish singing. 🐠",
-            completed: false,
-        },
-        {
-            id: 5,
-            text: "Draw silly monster. 👹",
-            completed: false,
-        },
-    ];
+// No-op function for backward compatibility
+export const saveTodos = async (_todos: TodoItem[]): Promise<void> => {
+    return;
 };
 
 // Add a new todo
-export const addTodo = (todos: TodoItem[], text: string): TodoItem[] => {
+export const addTodo = async (todos: TodoItem[], text: string): Promise<TodoItem[]> => {
     if (text.trim() === "") return todos;
 
-    const newTodo: TodoItem = {
-        id: Date.now(),
-        text: text.trim(),
-        completed: false,
-    };
+    try {
+        const newTodo = await prisma.todo.create({
+            data: {
+                text: text.trim(),
+                completed: false
+            }
+        });
 
-    return [...todos, newTodo];
+        return [...todos, newTodo];
+    } catch (error) {
+        console.error('Failed to add todo to database', error);
+        return todos;
+    }
 };
 
 // Toggle todo completion status
-export const toggleTodoComplete = (todos: TodoItem[], id: number): TodoItem[] => {
-    return todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    );
+export const toggleTodoComplete = async (todos: TodoItem[], id: number): Promise<TodoItem[]> => {
+    const todoToUpdate = todos.find(todo => todo.id === id);
+
+    if (!todoToUpdate) return todos;
+
+    try {
+        const updatedTodo = await prisma.todo.update({
+            where: { id },
+            data: { completed: !todoToUpdate.completed }
+        });
+
+        return todos.map((todo) =>
+            todo.id === id ? updatedTodo : todo
+        );
+    } catch (error) {
+        console.error('Failed to update todo in database', error);
+        return todos;
+    }
 };
 
 // Delete a todo
-export const deleteTodo = (todos: TodoItem[], id: number): TodoItem[] => {
-    return todos.filter((todo) => todo.id !== id);
+export const deleteTodo = async (todos: TodoItem[], id: number): Promise<TodoItem[]> => {
+    try {
+        await prisma.todo.delete({
+            where: { id }
+        });
+
+        return todos.filter((todo) => todo.id !== id);
+    } catch (error) {
+        console.error('Failed to delete todo from database', error);
+        return todos;
+    }
 }; 
