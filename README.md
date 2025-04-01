@@ -8,5 +8,5 @@ This repository contains a collection of tools and resources for developers to u
 
 Trong ví dụ này, chúng ta sẽ tìm hiểu cách sử dụng IDE Cursor để kết nối với Figma thông qua MCP Server và MCP Client.
 
-![](images/MCP-Example-Figma-Architure.png)
+![](./images/MCP-Example-Figma-Architure.png)
 
