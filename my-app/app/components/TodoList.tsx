@@ -16,8 +16,8 @@ type TodoListProps = {
 const TodoList = ({ todos, onToggle, onDelete }: TodoListProps) => {
   if (todos.length === 0) {
     return (
-      <ul className="w-full space-y-2">
-        <li className="text-center py-4 text-gray-500 dark:text-gray-400">
+      <ul className="w-full flex flex-col gap-8">
+        <li className="text-center py-4 text-[#A1A1A1] font-[Helvetica]">
           No tasks yet. Add one above!
         </li>
       </ul>
@@ -25,7 +25,7 @@ const TodoList = ({ todos, onToggle, onDelete }: TodoListProps) => {
   }
 
   return (
-    <ul className="w-full space-y-2">
+    <ul className="w-full flex flex-col gap-8">
       {todos.map((todo) => (
         <Todo
           key={todo.id}

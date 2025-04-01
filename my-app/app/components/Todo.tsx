@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 type TodoProps = {
   id: number;
@@ -16,38 +17,32 @@ const Todo = ({ id, text, completed, onToggle, onDelete }: TodoProps) => {
   };
 
   return (
-    <li className="flex items-center justify-between p-3 rounded-md border border-black/[.08] dark:border-white/[.145]">
-      <div className="flex items-center gap-3">
+    <li className="flex items-center justify-between py-3 w-full">
+      <div className="flex items-center gap-3 w-full">
         <button
           onClick={() => onToggle(id)}
           onKeyDown={(e) => handleKeyDown(e, () => onToggle(id))}
-          className={`w-5 h-5 rounded-full border ${
+          className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
             completed
-              ? "bg-green-500 border-green-500"
-              : "border-black/[.2] dark:border-white/[.2]"
-          } flex items-center justify-center transition-colors`}
+              ? "bg-[#FF2056]"
+              : "bg-white border-[3px] border-[#D4D4D4]"
+          }`}
           aria-label={completed ? "Mark as incomplete" : "Mark as complete"}
           tabIndex={0}
         >
           {completed && (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+            <Image
+              src="/icons/check.svg"
+              alt="Completed"
+              width={14}
+              height={14}
+              className="text-white"
+            />
           )}
         </button>
         <span
-          className={`${
-            completed ? "line-through text-gray-500 dark:text-gray-400" : ""
+          className={`font-[Helvetica] text-[14px] text-[#525252] ${
+            completed ? "line-through opacity-70" : ""
           }`}
         >
           {text}
@@ -56,25 +51,17 @@ const Todo = ({ id, text, completed, onToggle, onDelete }: TodoProps) => {
       <button
         onClick={() => onDelete(id)}
         onKeyDown={(e) => handleKeyDown(e, () => onDelete(id))}
-        className="text-red-500 hover:text-red-700 transition-colors"
+        className="hover:opacity-80 transition-opacity"
         aria-label="Delete todo"
         tabIndex={0}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M3 6h18"></path>
-          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-        </svg>
+        <Image
+          src="/icons/x-mark.svg"
+          alt="Delete"
+          width={16}
+          height={16}
+          className="text-[#A1A1A1]"
+        />
       </button>
     </li>
   );
