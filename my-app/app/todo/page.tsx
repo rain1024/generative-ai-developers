@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import TodoList from "../components/TodoList";
-
-type TodoItem = {
-  id: number;
-  text: string;
-  completed: boolean;
-};
+import TodoList from "./components/TodoList";
+import {
+  TodoItem,
+  loadTodos,
+  saveTodos,
+  addTodo,
+  toggleTodoComplete,
+  deleteTodo,
+} from "./actions";
 
 export default function TodoApp() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
@@ -17,60 +19,17 @@ export default function TodoApp() {
 
   // Load todos from localStorage on initial render
   useEffect(() => {
-    const storedTodos = localStorage.getItem("todos");
-    if (storedTodos) {
-      try {
-        setTodos(JSON.parse(storedTodos));
-      } catch (error) {
-        console.error("Failed to parse stored todos", error);
-      }
-    } else {
-      // Set default initial values from the Figma design
-      setTodos([
-        {
-          id: 1,
-          text: "Breathe in, out. 🌬️",
-          completed: true,
-        },
-        {
-          id: 2,
-          text: "I'm alive! 🙌",
-          completed: true,
-        },
-        {
-          id: 3,
-          text: "Make sun smile. 😊",
-          completed: false,
-        },
-        {
-          id: 4,
-          text: "Teach fish singing. 🐠",
-          completed: false,
-        },
-        {
-          id: 5,
-          text: "Draw silly monster. 👹",
-          completed: false,
-        },
-      ]);
-    }
+    setTodos(loadTodos());
   }, []);
 
   // Save todos to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
+    saveTodos(todos);
   }, [todos]);
 
   const handleAddTodo = () => {
     if (inputValue.trim() === "") return;
-
-    const newTodo: TodoItem = {
-      id: Date.now(),
-      text: inputValue.trim(),
-      completed: false,
-    };
-
-    setTodos([...todos, newTodo]);
+    setTodos(addTodo(todos, inputValue));
     setInputValue("");
   };
 
@@ -81,15 +40,11 @@ export default function TodoApp() {
   };
 
   const handleToggleComplete = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
+    setTodos(toggleTodoComplete(todos, id));
   };
 
   const handleDeleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+    setTodos(deleteTodo(todos, id));
   };
 
   return (
